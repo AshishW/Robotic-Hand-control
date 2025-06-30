@@ -206,14 +206,14 @@
         const silverMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.95, roughness: 0.35 });
         const redMat = new THREE.MeshStandardMaterial({ color: 0x990000, metalness: 0.8, roughness: 0.3 });
         const darkMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8, roughness: 0.5 });
-        const emissiveMat = new THREE.MeshBasicMaterial({ color: 0x00bfff, toneMapped: false }); // Changed color for better visibility
+        const emissiveMat = new THREE.MeshBasicMaterial({ color: 0xe8fffd, toneMapped: false }); // Changed color for better visibility
 
         function init() {
             const container = document.getElementById('scene-container');
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x0a0a0a);
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-            camera.position.set(0, 10, 25);
+            camera.position.set(0, 8, 85);
             renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
@@ -288,7 +288,7 @@
             // MediaPipe angles are 0 (straight) to ~PI. Your model uses 0 to -PI/1.8.
             // So we need to negate and scale the angle. A scale of ~0.6 might be a good start.
             const angleScale = -1.0;
-            const duration = 0.04; // Use a short duration for smooth, responsive movement
+            const duration = 0.05; // Use a short duration for smooth, responsive movement
             const ease = 'power1.out';
             
             gsap.to(joints.index.mcp.rotation, { x: (Math.PI - indexMCP_angle) * angleScale, duration, ease });
@@ -326,6 +326,7 @@
         function createHand() {
             const handGroup = new THREE.Group();
             handGroup.position.y = -2;
+            handGroup.rotation.y = Math.PI;
             scene.add(handGroup);
             const palmGroup = new THREE.Group();
             handGroup.add(palmGroup);
@@ -343,7 +344,7 @@
             // silverPalm.position.set(0, 4, -1.6); // Moved to negative Z (front)
             // palmGroup.add(silverPalm);
 
-            const repulsorLight = new THREE.PointLight(0x00bfff, 30, 15);
+            const repulsorLight = new THREE.PointLight(0xd2fcef, 30, 15);
             repulsorLight.position.set(0, 4, -1.8); // Moved to negative Z (front)
             palmGroup.add(repulsorLight);
             
