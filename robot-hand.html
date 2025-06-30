@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High-Detail Robotic Hand (Full Articulation)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            background-color: #0a0a0a;
+            color: #e5e7eb;
+        }
+        #scene-container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        canvas { display: block; }
+        #controls-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(180deg, rgba(10, 10, 10, 0) 0%, rgba(10, 10, 10, 0.9) 100%);
+            z-index: 2;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .finger-panel {
+            background-color: rgba(20, 20, 20, 0.7);
+            border: 1px solid rgba(100, 100, 100, 0.5);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            backdrop-filter: blur(5px);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            min-width: 200px;
+        }
+        .finger-panel h3 {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #d81e05;
+            text-align: center;
+            margin: 0;
+            text-shadow: 0 0 8px rgba(255, 50, 50, 0.7);
+        }
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        .slider-group label {
+            font-size: 0.8rem;
+            color: #bbbbbb;
+            font-weight: 500;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #444;
+            border-radius: 5px;
+            outline: none;
+            transition: opacity .2s;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #d81e05;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 0 10px rgba(255, 30, 30, 0.8);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #d81e05;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 0 10px rgba(255, 30, 30, 0.8);
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- for webcam setup -->
+    <div style="position: absolute; left: 10px; top: 10px; z-index: 10;">
+        <video id="webcam" autoplay playsinline style="transform: scaleX(-1); visibility: hidden; width: 120px; height: 90px;"></video>
+    </div>
+
+    <div id="scene-container"></div>
+    <div id="controls-container">
+        <!-- Thumb -->
+        <div class="finger-panel">
+            <h3>Thumb</h3>
+            <div class="slider-group"><label for="thumb-cmc">CMC (Opposition)</label><input type="range" id="thumb-cmc" min="0" max="100" value="50"></div>
+            <div class="slider-group"><label for="thumb-mcp">MCP (Knuckle)</label><input type="range" id="thumb-mcp" min="0" max="100" value="0"></div>
+            <div class="slider-group"><label for="thumb-ip">IP (Tip)</label><input type="range" id="thumb-ip" min="0" max="100" value="0"></div>
+        </div>
+        <!-- Index -->
+        <div class="finger-panel">
+            <h3>Index</h3>
+            <div class="slider-group"><label for="index-mcp">MCP</label><input type="range" id="index-mcp" min="0" max="100" value="0"></div>
+            <div class="slider-group"><label for="index-pip">PIP</label><input type="range" id="index-pip" min="0" max="100" value="0"></div>
+            <div class="slider-group"><label for="index-dip">DIP</label><input type="range" id="index-dip" min="0" max="100" value="0"></div>
+        </div>
+        <!-- Middle -->
+        <div class="finger-panel">
+            <h3>Middle</h3>
+            <div class="slider-group"><label for="middle-mcp">MCP</label><input type="range" id="middle-mcp" min="0" max="100" value="0"></div>
+            <div class="slider-group"><label for="middle-pip">PIP</label><input type="range" id="middle-pip" min="0" max="100" value="0"></div>
+            <div class="slider-group"><label for="middle-dip">DIP</label><input type="range" id="middle-dip" min="0" max="100" value="0"></div>
+        </div>
+        <!-- Ring -->
+        <div class="finger-panel">
+            <h3>Ring</h3>
+            <div class="slider-group"><label for="ring-mcp">MCP</label><input type="range" id="ring-mcp" min="0" max="100" value="0"></div>
+            <div class="slider-group"><label for="ring-pip">PIP</label><input type="range" id="ring-pip" min="0" max="100" value="0"></div>
+            <div class="slider-group"><label for="ring-dip">DIP</label><input type="range" id="ring-dip" min="0" max="100" value="0"></div>
+        </div>
+        <!-- Pinky -->
+        <div class="finger-panel">
+            <h3>Pinky</h3>
+            <div class="slider-group"><label for="pinky-mcp">MCP</label><input type="range" id="pinky-mcp" min="0" max="100" value="0"></div>
+            <div class="slider-group"><label for="pinky-pip">PIP</label><input type="range" id="pinky-pip" min="0" max="100" value="0"></div>
+            <div class="slider-group"><label for="pinky-dip">DIP</label><input type="range" id="pinky-dip" min="0" max="100" value="0"></div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+    <script type="module">
+        import { FilesetResolver, HandLandmarker } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest';
+        let handLandmarker;
+        let lastVideoTime = -1;
+        const video = document.getElementById('webcam');
+
+        async function setupMediaPipe() {
+            const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm");
+            handLandmarker = await HandLandmarker.createFromOptions(vision, {
+                baseOptions: {
+                    modelAssetPath: `./app/shared/models/hand_landmarker.task`,
+                    delegate: "GPU"
+                },
+                runningMode: "VIDEO",
+                numHands: 1
+            });
+            console.log("Hand Landmarker is ready!");
+            startWebcam();
+        }
+
+        function startWebcam() {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+                    video.srcObject = stream;
+                    video.addEventListener("loadeddata", predictWebcam);
+                });
+            }
+        }
+
+        function predictWebcam() {
+            const nowInMs = Date.now();
+            if (video.currentTime !== lastVideoTime) {
+                lastVideoTime = video.currentTime;
+                const result = handLandmarker.detectForVideo(video, nowInMs);
+                if (result && result.landmarks && result.landmarks.length > 0) {
+                    // This is where we'll update the hand
+                    updateHandWithLandmarks(result.landmarks[0]);
+                }
+            }
+            window.requestAnimationFrame(predictWebcam);
+        }
+
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        let scene, camera, renderer, controls;
+        const joints = {};
+
+        // --- Materials ---
+        const silverMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.95, roughness: 0.35 });
+        const redMat = new THREE.MeshStandardMaterial({ color: 0x990000, metalness: 0.8, roughness: 0.3 });
+        const darkMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8, roughness: 0.5 });
+        const emissiveMat = new THREE.MeshBasicMaterial({ color: 0x00bfff, toneMapped: false }); // Changed color for better visibility
+
+        function init() {
+            const container = document.getElementById('scene-container');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a0a);
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(0, 10, 25);
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.5;
+            container.appendChild(renderer.domElement);
+            scene.add(new THREE.HemisphereLight(0x444444, 0x111111, 1.5));
+            const keyLight = new THREE.DirectionalLight(0xffffff, 3.0);
+            keyLight.position.set(5, 10, 8);
+            keyLight.castShadow = true;
+            keyLight.shadow.mapSize.set(2048, 2048);
+            keyLight.shadow.bias = -0.0001;
+            scene.add(keyLight);
+            const rimLight = new THREE.DirectionalLight(0xffffff, 2.0);
+            rimLight.position.set(-10, 5, -15);
+            scene.add(rimLight);
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.target.set(0, 4, 0);
+            controls.enableDamping = true;
+            
+            createHand();
+            setupMediaPipe(); // media pipe setup
+            setupEventListeners(); // Enable manual slider controls
+            
+            window.addEventListener('resize', onWindowResize, false);
+            animate();
+        }
+
+        function updateHandWithLandmarks(landmarks) {
+            // Helper function to calculate angle between three points
+            const getAngle = (p1, p2, p3) => {
+                const v1 = new THREE.Vector3(p1.x - p2.x, p1.y - p2.y, p1.z - p2.z);
+                const v2 = new THREE.Vector3(p3.x - p2.x, p3.y - p2.y, p3.z - p2.z);
+                return v1.angleTo(v2);
+            };
+
+            // --- Finger Bend (Flexion/Extension) ---
+            // We calculate the angle for each joint based on the landmarks.
+            // NOTE: The resulting angle is in radians. You may need to scale it.
+
+            // Index Finger
+            const indexMCP_angle = getAngle(landmarks[0], landmarks[5], landmarks[6]);
+            const indexPIP_angle = getAngle(landmarks[5], landmarks[6], landmarks[7]);
+            const indexDIP_angle = getAngle(landmarks[6], landmarks[7], landmarks[8]);
+
+            // Middle Finger
+            const middleMCP_angle = getAngle(landmarks[0], landmarks[9], landmarks[10]);
+            const middlePIP_angle = getAngle(landmarks[9], landmarks[10], landmarks[11]);
+            const middleDIP_angle = getAngle(landmarks[10], landmarks[11], landmarks[12]);
+
+            // Ring Finger
+            const ringMCP_angle = getAngle(landmarks[0], landmarks[13], landmarks[14]);
+            const ringPIP_angle = getAngle(landmarks[13], landmarks[14], landmarks[15]);
+            const ringDIP_angle = getAngle(landmarks[14], landmarks[15], landmarks[16]);
+            
+            // Pinky Finger
+            const pinkyMCP_angle = getAngle(landmarks[0], landmarks[17], landmarks[18]);
+            const pinkyPIP_angle = getAngle(landmarks[17], landmarks[18], landmarks[19]);
+            const pinkyDIP_angle = getAngle(landmarks[18], landmarks[19], landmarks[20]);
+
+            // Thumb
+            // Thumb is more complex, let's start with a simple flexion
+            const thumbMCP_angle = getAngle(landmarks[1], landmarks[2], landmarks[3]);
+            const thumbIP_angle = getAngle(landmarks[2], landmarks[3], landmarks[4]);
+
+
+            // --- Apply Rotations to your Three.js Hand ---
+            // You'll need to find the right mapping and scaling factor.
+            // The rotation is on the X-axis for flexion in your model.
+            // MediaPipe angles are 0 (straight) to ~PI. Your model uses 0 to -PI/1.8.
+            // So we need to negate and scale the angle. A scale of ~0.6 might be a good start.
+            const angleScale = -0.6;
+            const duration = 0.05; // Use a short duration for smooth, responsive movement
+            const ease = 'power1.out';
+            
+            gsap.to(joints.index.mcp.rotation, { x: (Math.PI - indexMCP_angle) * angleScale, duration, ease });
+            gsap.to(joints.index.pip.rotation, { x: (Math.PI - indexPIP_angle) * angleScale, duration, ease });
+            gsap.to(joints.index.dip.rotation, { x: (Math.PI - indexDIP_angle) * angleScale, duration, ease });
+
+            gsap.to(joints.middle.mcp.rotation, { x: (Math.PI - middleMCP_angle) * angleScale, duration, ease });
+            gsap.to(joints.middle.pip.rotation, { x: (Math.PI - middlePIP_angle) * angleScale, duration, ease });
+            gsap.to(joints.middle.dip.rotation, { x: (Math.PI - middleDIP_angle) * angleScale, duration, ease });
+
+            gsap.to(joints.ring.mcp.rotation, { x: (Math.PI - ringMCP_angle) * angleScale, duration, ease });
+            gsap.to(joints.ring.pip.rotation, { x: (Math.PI - ringPIP_angle) * angleScale, duration, ease });
+            gsap.to(joints.ring.dip.rotation, { x: (Math.PI - ringDIP_angle) * angleScale, duration, ease });
+
+            gsap.to(joints.pinky.mcp.rotation, { x: (Math.PI - pinkyMCP_angle) * angleScale, duration, ease });
+            gsap.to(joints.pinky.pip.rotation, { x: (Math.PI - pinkyPIP_angle) * angleScale, duration, ease });
+            gsap.to(joints.pinky.dip.rotation, { x: (Math.PI - pinkyDIP_angle) * angleScale, duration, ease });
+
+            gsap.to(joints.thumb.mcp.rotation, { x: (Math.PI - thumbMCP_angle) * angleScale * 1.2, duration, ease });
+            gsap.to(joints.thumb.ip.rotation, { x: (Math.PI - thumbIP_angle) * angleScale * 1.2, duration, ease });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function createHand() {
+            const handGroup = new THREE.Group();
+            handGroup.position.y = -2;
+            scene.add(handGroup);
+            const palmGroup = new THREE.Group();
+            handGroup.add(palmGroup);
+            const palmShape = new THREE.BoxGeometry(7, 8, 3);
+            const redPalm = new THREE.Mesh(palmShape, redMat);
+            redPalm.position.y = 2;
+            redPalm.castShadow = true;
+            palmGroup.add(redPalm);
+            
+            // --- MODIFIED: Glowing center moved to the front of the palm ---
+            const silverPalmPlate = new THREE.CylinderGeometry(3.5, 3, 1, 6);
+            const silverPalm = new THREE.Mesh(silverPalmPlate, silverMat);
+            silverPalm.castShadow = true;
+            silverPalm.rotation.y = Math.PI / 6;
+            silverPalm.position.set(0, 4, -1.6); // Moved to negative Z (front)
+            palmGroup.add(silverPalm);
+
+            const repulsorLight = new THREE.PointLight(0x00bfff, 30, 15);
+            repulsorLight.position.set(0, 4, -1.8); // Moved to negative Z (front)
+            palmGroup.add(repulsorLight);
+            
+            const repulsorGeo = new THREE.CircleGeometry(1.2, 32);
+            const repulsor = new THREE.Mesh(repulsorGeo, emissiveMat);
+            repulsor.position.set(0, 4, -1.71); // Moved to negative Z (front)
+            repulsor.rotation.y = Math.PI; // Rotated to face forward
+            palmGroup.add(repulsor);
+
+            const forearmGeo = new THREE.CylinderGeometry(3, 3.5, 8, 8);
+            const forearm = new THREE.Mesh(forearmGeo, redMat);
+            forearm.position.y = -6;
+            forearm.castShadow = true;
+            palmGroup.add(forearm);
+
+            // --- MODIFIED: Finger positions adjusted to reduce gaps ---
+            joints.index = createFinger(1.7, 7.5, 0.8);
+            joints.middle = createFinger(0.5, 8, 0.85);
+            joints.ring = createFinger(-0.8, 7.8, 0.8);
+            joints.pinky = createFinger(-2.0, 7.2, 0.7);
+            joints.thumb = createThumb();
+            
+            palmGroup.add(joints.index.mcp);
+            palmGroup.add(joints.middle.mcp);
+            palmGroup.add(joints.ring.mcp);
+            palmGroup.add(joints.pinky.mcp);
+            palmGroup.add(joints.thumb.cmc);
+        }
+        
+        function createFinger(x, y, scale) {
+            const createSegment = (w, h, d) => new THREE.Mesh(new THREE.BoxGeometry(w, h, d), silverMat);
+            const createJointGeo = (r) => new THREE.Mesh(new THREE.SphereGeometry(r, 16, 16), darkMat);
+
+            const mcp = new THREE.Group(); mcp.position.set(x, y, 0);
+            const pip = new THREE.Group();
+            const dip = new THREE.Group();
+
+            mcp.add(createJointGeo(scale * 0.9));
+            const seg1 = createSegment(scale * 1.5, scale * 3, scale * 1.8);
+            seg1.castShadow = true;
+            seg1.position.y = scale * 1.5;
+            mcp.add(seg1);
+            
+            pip.position.y = scale * 3;
+            seg1.add(pip);
+            pip.add(createJointGeo(scale * 0.7));
+            const seg2 = createSegment(scale * 1.3, scale * 2.5, scale * 1.6);
+            seg2.castShadow = true;
+            seg2.position.y = scale * 1.25;
+            pip.add(seg2);
+
+            dip.position.y = scale * 2.5;
+            seg2.add(dip);
+            dip.add(createJointGeo(scale * 0.6));
+            const seg3 = createSegment(scale * 1.1, scale * 1.8, scale * 1.4);
+            seg3.castShadow = true;
+            seg3.position.y = scale * 0.9;
+            dip.add(seg3);
+            
+            return { mcp, pip, dip };
+        }
+        
+        function createThumb() {
+             const createSegment = (w, h, d) => new THREE.Mesh(new THREE.BoxGeometry(w, h, d), silverMat);
+             const createJointGeo = (r) => new THREE.Mesh(new THREE.SphereGeometry(r, 16, 16), darkMat);
+
+             const cmc = new THREE.Group();
+             cmc.position.set(3.8, 1.5, 0.5);
+             cmc.add(createJointGeo(1.1));
+
+             const mcp = new THREE.Group();
+             cmc.add(mcp);
+             const seg1 = createSegment(1.8, 3.5, 2);
+             seg1.castShadow = true;
+             seg1.position.y = 1.75;
+             mcp.add(seg1);
+
+             const ip = new THREE.Group();
+             ip.position.y = 3.5;
+             seg1.add(ip);
+             ip.add(createJointGeo(0.8));
+             const seg2 = createSegment(1.6, 2.8, 1.8);
+             seg2.castShadow = true;
+             seg2.position.y = 1.4;
+             ip.add(seg2);
+
+            return { cmc, mcp, ip };
+        }
+
+        function setupEventListeners() {
+            const fingerNames = ['index', 'middle', 'ring', 'pinky'];
+            const jointNames = ['mcp', 'pip', 'dip'];
+
+            // --- MODIFIED: Added collision detection to index finger listener ---
+            const indexMCP_slider = document.getElementById('index-mcp');
+            indexMCP_slider.addEventListener('input', (e) => {
+                let value = parseFloat(e.target.value);
+                
+                // Read state of other relevant sliders
+                const thumbCMCValue = parseFloat(document.getElementById('thumb-cmc').value);
+                const thumbMCPValue = parseFloat(document.getElementById('thumb-mcp').value);
+
+                // Collision Rule: If thumb is opposed and flexed, limit index flexion.
+                if (thumbCMCValue > 75 && thumbMCPValue > 30) {
+                    const maxAllowed = 20;
+                    if (value > maxAllowed) {
+                        value = maxAllowed;
+                        e.target.value = value; // Update slider to reflect capped value
+                    }
+                }
+
+                const angle = - (value / 100) * Math.PI / 1.8;
+                gsap.to(joints.index.mcp.rotation, { x: angle, duration: 0.3, ease: 'power2.out' });
+            });
+
+            // Generic listeners for other fingers and joints
+            fingerNames.forEach(finger => {
+                jointNames.forEach(joint => {
+                    if (finger === 'index' && joint === 'mcp') return; // Skip the one we handled above
+                    const slider = document.getElementById(`${finger}-${joint}`);
+                    slider.addEventListener('input', (e) => {
+                        const value = parseFloat(e.target.value) / 100;
+                        const angle = -value * Math.PI / 1.8;
+                        gsap.to(joints[finger][joint].rotation, { x: angle, duration: 0.3, ease: 'power2.out' });
+                    });
+                });
+            });
+
+            // --- MODIFIED: Added collision detection to thumb listeners ---
+            const thumbCMC_slider = document.getElementById('thumb-cmc');
+            thumbCMC_slider.addEventListener('input', e => {
+                let value = parseFloat(e.target.value); // Value is 0-100
+
+                const thumbMCPValue = parseFloat(document.getElementById('thumb-mcp').value);
+                const indexMCPValue = parseFloat(document.getElementById('index-mcp').value);
+
+                // Collision Rule: If both thumb and index are flexed, limit opposition movement.
+                if (value > 75 && thumbMCPValue > 30 && indexMCPValue > 20) {
+                    value = 75; // Cap the value
+                    e.target.value = value; // Update slider
+                }
+
+                const normalizedValue = (value - 50) / 50; // Range -1 to 1
+                const angleY = -normalizedValue * Math.PI / 4;
+                const angleZ = normalizedValue * Math.PI / 6;
+                gsap.to(joints.thumb.cmc.rotation, { y: angleY, z: angleZ, duration: 0.3, ease: 'power2.out' });
+            });
+
+            const thumbMCP_slider = document.getElementById('thumb-mcp');
+            thumbMCP_slider.addEventListener('input', e => {
+                let value = parseFloat(e.target.value);
+
+                const thumbCMCValue = parseFloat(document.getElementById('thumb-cmc').value);
+                const indexMCPValue = parseFloat(document.getElementById('index-mcp').value);
+                
+                // Collision Rule: If thumb is opposed and index is flexed, limit thumb flexion.
+                if (thumbCMCValue > 75 && indexMCPValue > 20) {
+                    const maxAllowed = 30;
+                    if (value > maxAllowed) {
+                        value = maxAllowed;
+                        e.target.value = value;
+                    }
+                }
+
+                const angle = - (value / 100) * Math.PI / 2;
+                gsap.to(joints.thumb.mcp.rotation, { x: angle, duration: 0.3, ease: 'power2.out' });
+            });
+
+            const thumbIP = document.getElementById('thumb-ip');
+            thumbIP.addEventListener('input', e => {
+                const value = parseFloat(e.target.value) / 100;
+                const angle = -value * Math.PI / 2;
+                gsap.to(joints.thumb.ip.rotation, { x: angle, duration: 0.3, ease: 'power2.out' });
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
