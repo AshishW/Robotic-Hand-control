@@ -287,8 +287,8 @@
             // The rotation is on the X-axis for flexion in your model.
             // MediaPipe angles are 0 (straight) to ~PI. Your model uses 0 to -PI/1.8.
             // So we need to negate and scale the angle. A scale of ~0.6 might be a good start.
-            const angleScale = -0.6;
-            const duration = 0.05; // Use a short duration for smooth, responsive movement
+            const angleScale = -1.0;
+            const duration = 0.04; // Use a short duration for smooth, responsive movement
             const ease = 'power1.out';
             
             gsap.to(joints.index.mcp.rotation, { x: (Math.PI - indexMCP_angle) * angleScale, duration, ease });
@@ -336,12 +336,12 @@
             palmGroup.add(redPalm);
             
             // --- MODIFIED: Glowing center moved to the front of the palm ---
-            const silverPalmPlate = new THREE.CylinderGeometry(3.5, 3, 1, 6);
-            const silverPalm = new THREE.Mesh(silverPalmPlate, silverMat);
-            silverPalm.castShadow = true;
-            silverPalm.rotation.y = Math.PI / 6;
-            silverPalm.position.set(0, 4, -1.6); // Moved to negative Z (front)
-            palmGroup.add(silverPalm);
+            // const silverPalmPlate = new THREE.CylinderGeometry(3.5, 3, 1, 6);
+            // const silverPalm = new THREE.Mesh(silverPalmPlate, silverMat);
+            // silverPalm.castShadow = true;
+            // silverPalm.rotation.y = Math.PI / 6;
+            // silverPalm.position.set(0, 4, -1.6); // Moved to negative Z (front)
+            // palmGroup.add(silverPalm);
 
             const repulsorLight = new THREE.PointLight(0x00bfff, 30, 15);
             repulsorLight.position.set(0, 4, -1.8); // Moved to negative Z (front)
