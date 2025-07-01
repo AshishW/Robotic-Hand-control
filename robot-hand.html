@@ -198,6 +198,7 @@
 
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 
         let scene, camera, renderer, controls;
         const joints = {};
@@ -330,27 +331,104 @@
             scene.add(handGroup);
             const palmGroup = new THREE.Group();
             handGroup.add(palmGroup);
-            const palmShape = new THREE.BoxGeometry(7, 8, 3);
+            const palmShape = new RoundedBoxGeometry(7, 9.8, 3, 4, 0.9); // width, height, depth, segments, radius
             const redPalm = new THREE.Mesh(palmShape, redMat);
             redPalm.position.y = 2;
             redPalm.castShadow = true;
             palmGroup.add(redPalm);
             
-            // --- MODIFIED: Glowing center moved to the front of the palm ---
-            // const silverPalmPlate = new THREE.CylinderGeometry(3.5, 3, 1, 6);
-            // const silverPalm = new THREE.Mesh(silverPalmPlate, silverMat);
-            // silverPalm.castShadow = true;
-            // silverPalm.rotation.y = Math.PI / 6;
-            // silverPalm.position.set(0, 4, -1.6); // Moved to negative Z (front)
-            // palmGroup.add(silverPalm);
+            // SILVER PLATES:
+            const plateShape = new THREE.Shape();
+            const outerRadius = 2.8;
+            const innerRadius = 1.4;
+            const angle = Math.PI / 8; // Angle for one segment
+            
+            plateShape.moveTo(innerRadius * Math.cos(-angle), innerRadius * Math.sin(-angle));
+            plateShape.lineTo(outerRadius * Math.cos(-angle * 0.8), outerRadius * Math.sin(-angle * 0.8));
+            plateShape.lineTo(outerRadius * Math.cos(angle * 0.8), outerRadius * Math.sin(angle * 0.8));
+            plateShape.lineTo(innerRadius * Math.cos(angle), innerRadius * Math.sin(angle));
+            
+            const extrudeSettings = { depth: 0.2, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.1, bevelThickness: 0.1 };
+            const plateGeo = new THREE.ExtrudeGeometry(plateShape, extrudeSettings);
+            
+            for (let i = 0; i < 8; i++) {
+                const plate = new THREE.Mesh(plateGeo, silverMat);
+                const rotationAngle = (i / 8) * Math.PI * 2 + Math.PI / 8;
+                plate.rotation.z = rotationAngle;
+                plate.position.set(0, 2.8, -1.6); // Position around the repulsor center
+                plate.castShadow = true;
+                palmGroup.add(plate);
+            }
+            // Additional decorative plates
+            const upperPlateGeo = new RoundedBoxGeometry(4, 1.5, 0.3, 2, 0.2);
+            const upperPlate = new THREE.Mesh(upperPlateGeo, silverMat);
+            upperPlate.position.set(0, 5.2, -1.6);
+            upperPlate.castShadow = true;
+            palmGroup.add(upperPlate);
 
+            const lowerPlateGeo = new RoundedBoxGeometry(6, 1.8, 0.3, 2, 0.2);
+            const lowerPlate = new THREE.Mesh(lowerPlateGeo, silverMat);
+            lowerPlate.position.set(0, -0.2, -1.6);
+            lowerPlate.castShadow = true;
+            palmGroup.add(lowerPlate);
+
+            const sidePlateGeo = new RoundedBoxGeometry(1.5, 3, 0.3, 2, 0.2);
+            const leftSidePlate = new THREE.Mesh(sidePlateGeo, silverMat);
+            leftSidePlate.position.set(-2.5, 2.5, -1.6);
+            leftSidePlate.rotation.z = 0.2;
+            leftSidePlate.castShadow = true;
+            palmGroup.add(leftSidePlate);
+
+            const rightSidePlate = leftSidePlate.clone();
+            rightSidePlate.position.x = 2.5;
+            rightSidePlate.rotation.z = -0.2;
+            palmGroup.add(rightSidePlate);
+            
+            //  Back and Side Plates ---
+            // Main back plate
+            const backPlateGeo = new RoundedBoxGeometry(6.5, 9, 0.5, 3, 0.6);
+            const backPlate = new THREE.Mesh(backPlateGeo, silverMat);
+            backPlate.position.set(0, 2.5, 1.6); // Position on the back of the palm
+            backPlate.castShadow = true;
+            palmGroup.add(backPlate);
+
+            // Back detail plates
+            const backDetailGeo = new RoundedBoxGeometry(5, 3, 0.3, 2, 0.4);
+            const upperBackShape = new THREE.Shape();
+            upperBackShape.moveTo(-2.5, 0);
+            upperBackShape.lineTo(-2.8, 1.5);
+            upperBackShape.lineTo(0, 2.8); // Pointed top
+            upperBackShape.lineTo(2.8, 1.5);
+            upperBackShape.lineTo(2.5, 0);
+            upperBackShape.closePath();
+
+            const extrudeSettingsBack = { depth: 0.1, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.1, bevelThickness: 0.1 };
+            const upperBackPlateGeo = new THREE.ExtrudeGeometry(upperBackShape, extrudeSettingsBack);
+            const upperBackPlate = new THREE.Mesh(upperBackPlateGeo, redMat);
+            upperBackPlate.position.set(0, 3.1, 1.7);
+            upperBackPlate.castShadow = true;
+            palmGroup.add(upperBackPlate);
+
+
+            // Side armor plates
+            const sideArmorGeo = new RoundedBoxGeometry(0.6, 7, 2.8, 2, 0.3);
+            const leftSideArmor = new THREE.Mesh(sideArmorGeo, silverMat);
+            leftSideArmor.position.set(-3.7, 3, 0); // Position on the left side, centered
+            leftSideArmor.castShadow = true;
+            palmGroup.add(leftSideArmor);
+
+            const rightSideArmor = leftSideArmor.clone();
+            rightSideArmor.position.x = 3.7; // Position on the right side
+            palmGroup.add(rightSideArmor);
+
+            // PALM REPULSOR
             const repulsorLight = new THREE.PointLight(0xd2fcef, 30, 15);
-            repulsorLight.position.set(0, 4, -1.8); // Moved to negative Z (front)
+            repulsorLight.position.set(0, 2.8, -1.8); // Moved to negative Z (front)
             palmGroup.add(repulsorLight);
             
             const repulsorGeo = new THREE.CircleGeometry(1.2, 32);
             const repulsor = new THREE.Mesh(repulsorGeo, emissiveMat);
-            repulsor.position.set(0, 4, -1.71); // Moved to negative Z (front)
+            repulsor.position.set(0, 2.8, -1.71); // Moved to negative Z (front)
             repulsor.rotation.y = Math.PI; // Rotated to face forward
             palmGroup.add(repulsor);
 
@@ -376,6 +454,11 @@
         
         function createFinger(x, y, scale) {
             const createSegment = (w, h, d) => new THREE.Mesh(new THREE.BoxGeometry(w, h, d), silverMat);
+            // const createSegment = (w, h, d) => {
+            //     const radius = (w + d) / 4; // Average radius from box dimensions
+            //     const geo = new THREE.CylinderGeometry(radius * 0.9, radius, h, 16);
+            //     return new THREE.Mesh(geo, silverMat);
+            // };
             const createJointGeo = (r) => new THREE.Mesh(new THREE.SphereGeometry(r, 16, 16), darkMat);
 
             const mcp = new THREE.Group(); mcp.position.set(x, y, 0);
@@ -388,7 +471,7 @@
             seg1.position.y = scale * 1.5;
             mcp.add(seg1);
             
-            pip.position.y = scale * 3;
+            pip.position.y = scale * 2;
             seg1.add(pip);
             pip.add(createJointGeo(scale * 0.7));
             const seg2 = createSegment(scale * 1.3, scale * 2.5, scale * 1.6);
@@ -396,7 +479,7 @@
             seg2.position.y = scale * 1.25;
             pip.add(seg2);
 
-            dip.position.y = scale * 2.5;
+            dip.position.y = scale * 2.2;
             seg2.add(dip);
             dip.add(createJointGeo(scale * 0.6));
             const seg3 = createSegment(scale * 1.1, scale * 1.8, scale * 1.4);
@@ -409,6 +492,11 @@
         
         function createThumb() {
              const createSegment = (w, h, d) => new THREE.Mesh(new THREE.BoxGeometry(w, h, d), silverMat);
+            // const createSegment = (w, h, d) => {
+            //     const radius = (w + d) / 4; // Average radius from box dimensions
+            //     const geo = new THREE.CylinderGeometry(radius * 0.9, radius, h, 16);
+            //     return new THREE.Mesh(geo, silverMat);
+            //  };
              const createJointGeo = (r) => new THREE.Mesh(new THREE.SphereGeometry(r, 16, 16), darkMat);
 
              const cmc = new THREE.Group();
@@ -419,11 +507,11 @@
              cmc.add(mcp);
              const seg1 = createSegment(1.8, 3.5, 2);
              seg1.castShadow = true;
-             seg1.position.y = 1.75;
+             seg1.position.y = 1.55;
              mcp.add(seg1);
 
              const ip = new THREE.Group();
-             ip.position.y = 3.5;
+             ip.position.y = 2.5;
              seg1.add(ip);
              ip.add(createJointGeo(0.8));
              const seg2 = createSegment(1.6, 2.8, 1.8);
