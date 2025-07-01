@@ -198,6 +198,7 @@
 
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 
         let scene, camera, renderer, controls;
         const joints = {};
@@ -330,7 +331,7 @@
             scene.add(handGroup);
             const palmGroup = new THREE.Group();
             handGroup.add(palmGroup);
-            const palmShape = new THREE.BoxGeometry(7, 8, 3);
+            const palmShape = new RoundedBoxGeometry(7, 9.8, 3, 4, 0.9); // width, height, depth, segments, radius
             const redPalm = new THREE.Mesh(palmShape, redMat);
             redPalm.position.y = 2;
             redPalm.castShadow = true;
@@ -345,12 +346,12 @@
             // palmGroup.add(silverPalm);
 
             const repulsorLight = new THREE.PointLight(0xd2fcef, 30, 15);
-            repulsorLight.position.set(0, 4, -1.8); // Moved to negative Z (front)
+            repulsorLight.position.set(0, 2.8, -1.8); // Moved to negative Z (front)
             palmGroup.add(repulsorLight);
             
             const repulsorGeo = new THREE.CircleGeometry(1.2, 32);
             const repulsor = new THREE.Mesh(repulsorGeo, emissiveMat);
-            repulsor.position.set(0, 4, -1.71); // Moved to negative Z (front)
+            repulsor.position.set(0, 2.8, -1.71); // Moved to negative Z (front)
             repulsor.rotation.y = Math.PI; // Rotated to face forward
             palmGroup.add(repulsor);
 
@@ -376,6 +377,11 @@
         
         function createFinger(x, y, scale) {
             const createSegment = (w, h, d) => new THREE.Mesh(new THREE.BoxGeometry(w, h, d), silverMat);
+            // const createSegment = (w, h, d) => {
+            //     const radius = (w + d) / 4; // Average radius from box dimensions
+            //     const geo = new THREE.CylinderGeometry(radius * 0.9, radius, h, 16);
+            //     return new THREE.Mesh(geo, silverMat);
+            // };
             const createJointGeo = (r) => new THREE.Mesh(new THREE.SphereGeometry(r, 16, 16), darkMat);
 
             const mcp = new THREE.Group(); mcp.position.set(x, y, 0);
@@ -388,7 +394,7 @@
             seg1.position.y = scale * 1.5;
             mcp.add(seg1);
             
-            pip.position.y = scale * 3;
+            pip.position.y = scale * 2;
             seg1.add(pip);
             pip.add(createJointGeo(scale * 0.7));
             const seg2 = createSegment(scale * 1.3, scale * 2.5, scale * 1.6);
@@ -396,7 +402,7 @@
             seg2.position.y = scale * 1.25;
             pip.add(seg2);
 
-            dip.position.y = scale * 2.5;
+            dip.position.y = scale * 2.2;
             seg2.add(dip);
             dip.add(createJointGeo(scale * 0.6));
             const seg3 = createSegment(scale * 1.1, scale * 1.8, scale * 1.4);
@@ -409,6 +415,11 @@
         
         function createThumb() {
              const createSegment = (w, h, d) => new THREE.Mesh(new THREE.BoxGeometry(w, h, d), silverMat);
+            // const createSegment = (w, h, d) => {
+            //     const radius = (w + d) / 4; // Average radius from box dimensions
+            //     const geo = new THREE.CylinderGeometry(radius * 0.9, radius, h, 16);
+            //     return new THREE.Mesh(geo, silverMat);
+            //  };
              const createJointGeo = (r) => new THREE.Mesh(new THREE.SphereGeometry(r, 16, 16), darkMat);
 
              const cmc = new THREE.Group();
@@ -419,11 +430,11 @@
              cmc.add(mcp);
              const seg1 = createSegment(1.8, 3.5, 2);
              seg1.castShadow = true;
-             seg1.position.y = 1.75;
+             seg1.position.y = 1.55;
              mcp.add(seg1);
 
              const ip = new THREE.Group();
-             ip.position.y = 3.5;
+             ip.position.y = 2.5;
              seg1.add(ip);
              ip.add(createJointGeo(0.8));
              const seg2 = createSegment(1.6, 2.8, 1.8);
