@@ -453,12 +453,12 @@
         }
         
         function createFinger(x, y, scale) {
-            const createSegment = (w, h, d) => new THREE.Mesh(new THREE.BoxGeometry(w, h, d), silverMat);
-            // const createSegment = (w, h, d) => {
-            //     const radius = (w + d) / 4; // Average radius from box dimensions
-            //     const geo = new THREE.CylinderGeometry(radius * 0.9, radius, h, 16);
-            //     return new THREE.Mesh(geo, silverMat);
-            // };
+            // const createSegment = (w, h, d) => new THREE.Mesh(new THREE.BoxGeometry(w, h, d), silverMat);
+            const createSegment = (w, h, d) => {
+                const radius = Math.min(w, d) * 0.25; //  radius for the rounded corners
+                const geo = new RoundedBoxGeometry(w, h, d, 4, radius);
+                return new THREE.Mesh(geo, silverMat);
+            };
             const createJointGeo = (r) => new THREE.Mesh(new THREE.SphereGeometry(r, 16, 16), darkMat);
 
             const mcp = new THREE.Group(); mcp.position.set(x, y, 0);
@@ -479,24 +479,24 @@
             seg2.position.y = scale * 1.25;
             pip.add(seg2);
 
-            dip.position.y = scale * 2.2;
+            dip.position.y = scale * 1.7;
             seg2.add(dip);
             dip.add(createJointGeo(scale * 0.6));
             const seg3 = createSegment(scale * 1.1, scale * 1.8, scale * 1.4);
             seg3.castShadow = true;
-            seg3.position.y = scale * 0.9;
+            seg3.position.y = scale * 0.8;
             dip.add(seg3);
             
             return { mcp, pip, dip };
         }
         
         function createThumb() {
-             const createSegment = (w, h, d) => new THREE.Mesh(new THREE.BoxGeometry(w, h, d), silverMat);
-            // const createSegment = (w, h, d) => {
-            //     const radius = (w + d) / 4; // Average radius from box dimensions
-            //     const geo = new THREE.CylinderGeometry(radius * 0.9, radius, h, 16);
-            //     return new THREE.Mesh(geo, silverMat);
-            //  };
+            //  const createSegment = (w, h, d) => new THREE.Mesh(new THREE.BoxGeometry(w, h, d), silverMat);
+             const createSegment = (w, h, d) => {
+                const radius = Math.min(w, d) * 0.25;
+                const geo = new RoundedBoxGeometry(w, h, d, 4, radius);
+                return new THREE.Mesh(geo, silverMat);
+            };
              const createJointGeo = (r) => new THREE.Mesh(new THREE.SphereGeometry(r, 16, 16), darkMat);
 
              const cmc = new THREE.Group();
